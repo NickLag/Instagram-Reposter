@@ -1,0 +1,264 @@
+app:
+tk: f77582f599a9b2da134861840d2a6bce
+id: 800832912417190
+
+ph:
+tk: IGAARm3WHPzCpBZAFl0dlZAwanl4OEc1ZAEk5dTE1dkdhZAHI2MEVCZAUoxZA2xEby1zY3ZAVWlJrb1NuWGVhNWFSQVBKczUzQWxETjRKR2ExNk9TbEVyWnlSWjFSajU1RTZAZAcThuVVdORXF0WXBOTEZAYNGdZATTRQY0ZAfTHY3OW82S2tFUQZDZD
+id: 17841455197985437
+
+
+acess tk: EAALYWnFE4aYBQsCQcbgSutU9ofPb7GOCruRqZCRTUPIsS2xFhsRaX7PNxyFnXXSHad1uhoZBMmpqI9ZAUBg0uVroBZBaZBetLZB27QXbBNcWQ9irllxKZAjjMxAquZBWzwViSZBhTWvFbNqPW4fKF6yoMQS7dXWWZCZCw6V2xwZC6trNIxjzrDMzsUQxY7u9UJfg4dO4
+
+import requests
+import schedule
+import time
+from datetime import datetime
+
+# === CONFIGURAÇÕES ===
+ACCESS_TOKEN = "EAALYWnFE4aYBQsCQcbgSutU9ofPb7GOCruRqZCRTUPIsS2xFhsRaX7PNxyFnXXSHad1uhoZBMmpqI9ZAUBg0uVroBZBaZBetLZB27QXbBNcWQ9irllxKZAjjMxAquZBWzwViSZBhTWvFbNqPW4fKF6yoMQS7dXWWZCZCw6V2xwZC6trNIxjzrDMzsUQxY7u9UJfg4dO4"
+MY_INSTAGRAM_ID = "17841455197985437"
+TARGET_USER = "dragonmusic_"
+LOG_FILE = "postados_log.txt"
+
+def load_log():
+    try:
+        with open(LOG_FILE, "r") as f:
+            return f.read().splitlines()
+    except FileNotFoundError:
+        return []
+
+def save_to_log(post_id):
+    with open(LOG_FILE, "a") as f:
+        f.write(post_id + "\n")
+
+def get_latest_post_details():
+    """Busca o post mais recente e resolve carrosséis se necessário"""
+    # Adicionamos 'children' no fields para lidar com carrosséis
+    url = f"https://graph.facebook.com/v18.0/{MY_INSTAGRAM_ID}"
+    fields = f"business_discovery.username({TARGET_USER}){{media{{id,media_url,media_type,children{{media_url,media_type}}}}}}"
+    params = {'fields': fields, 'access_token': ACCESS_TOKEN}
+    
+    response = requests.get(url, params=params).json()
+    
+    try:
+        latest_post = response['business_discovery']['media']['data'][0]
+        p_id = latest_post['id']
+        p_type = latest_post['media_type']
+        
+        # Lógica para Carrossel: Pegar o primeiro item do álbum
+        if p_type == 'CAROUSEL_ALBUM' and 'children' in latest_post:
+            first_child = latest_post['children']['data'][0]
+            return p_id, first_child['media_url'], first_child['media_type']
+        
+        return p_id, latest_post.get('media_url'), p_type
+    except (KeyError, IndexError) as e:
+        print(f"Erro ao buscar post: {response}")
+        return None, None, None
+
+def share_to_story(media_url, media_type):
+    """Envia para o Story baseando-se no tipo de arquivo"""
+    post_url = f"https://graph.facebook.com/v18.0/{MY_INSTAGRAM_ID}/media"
+    
+    payload = {
+        'media_type': 'STORIES',
+        'access_token': ACCESS_TOKEN
+    }
+
+    # Define se usa image_url ou video_url
+    if media_type == 'VIDEO':
+        payload['video_url'] = media_url
+    else:
+        payload['image_url'] = media_url
+
+    res = requests.post(post_url, data=payload).json()
+    
+    if 'id' in res:
+        creation_id = res['id']
+        # Publicação Final
+        publish_url = f"https://graph.facebook.com/v18.0/{MY_INSTAGRAM_ID}/media_publish"
+        p_res = requests.post(publish_url, data={'creation_id': creation_id, 'access_token': ACCESS_TOKEN}).json()
+        return 'id' in p_res
+    else:
+        print(f"Erro no container: {res}")
+        return False
+
+def check_and_post():
+    print(f"[{datetime.now()}] Verificando @{TARGET_USER}...")
+    log = load_log()
+    post_id, m_url, m_type = get_latest_post_details()
+
+    if not post_id:
+        return
+
+    if post_id not in log:
+        print(f"Novo post ({m_type}) detectado: {post_id}. Postando...")
+        if share_to_story(m_url, m_type):
+            save_to_log(post_id)
+            print("✅ Sucesso! Postado no Story.")
+        else:
+            print("❌ Falha na postagem. Verifique o log acima.")
+    else:
+        print("⏭️ Post mais recente já foi processado.")
+
+# === AGENDAMENTO ===
+schedule.every().tuesday.at("19:00").do(check_and_post)
+schedule.every().thursday.at("19:00").do(check_and_post)
+
+if __name__ == "__main__":
+    print(f"Bot Purple Haze Ativo. Monitorando @{TARGET_USER}...")
+    # Teste manual imediato
+    check_and_post()
+    
+    # Loop de espera
+    while True:
+        schedule.run_pending()
+        time.sleep(60)
+
+
+
+
+
+
+
+import requests
+import schedule
+import time
+import os
+import cv2
+import base64
+from datetime import datetime
+from PIL import Image, ImageDraw, ImageFont
+from io import BytesIO
+
+# === CONFIGURAÇÕES ===
+ACCESS_TOKEN = "EAALYWnFE4aYBQsCQcbgSutU9ofPb7GOCruRqZCRTUPIsS2xFhsRaX7PNxyFnXXSHad1uhoZBMmpqI9ZAUBg0uVroBZBaZBetLZB27QXbBNcWQ9irllxKZAjjMxAquZBWzwViSZBhTWvFbNqPW4fKF6yoMQS7dXWWZCZCw6V2xwZC6trNIxjzrDMzsUQxY7u9UJfg4dO4"
+MY_INSTAGRAM_ID = "17841455197985437"
+TARGET_USER = "dragonmusic_"
+IMGBB_API_KEY = "d8708c0e7f0dae2ef239523b50ea314d"
+
+MEDIA_DIR, EDIT_DIR, LOG_DIR = "Media", "Edit", "Log"
+LOG_FILE = os.path.join(LOG_DIR, "postados_log.txt")
+
+for folder in [MEDIA_DIR, LOG_DIR, EDIT_DIR]:
+    os.makedirs(folder, exist_ok=True)
+
+def clean_old_media():
+    now = time.time()
+    for folder in [MEDIA_DIR, EDIT_DIR]:
+        for f in os.listdir(folder):
+            f_path = os.path.join(folder, f)
+            if os.stat(f_path).st_mtime < now - (7 * 86400):
+                os.remove(f_path)
+
+def upload_to_web(path):
+    with open(path, "rb") as file:
+        url = "https://api.imgbb.com/1/upload"
+        payload = {"key": IMGBB_API_KEY, "image": base64.b64encode(file.read())}
+        res = requests.post(url, payload).json()
+        return res['data']['url'] if res.get('success') else None
+
+def prepare_custom_image(media_url, post_id, caption_text):
+    """Cria o layout para IMAGENS: fundo roxo, bordas menores e textos grandes"""
+    # Cor #7842f5 em RGB
+    canvas_w, canvas_h = 1080, 1920
+    canvas = Image.new('RGB', (canvas_w, canvas_h), color=(120, 66, 245))
+    
+    response = requests.get(media_url)
+    img = Image.open(BytesIO(response.content)).convert("RGB")
+    
+    # Redimensionar para bordas menores (mais preenchimento)
+    max_w, max_h = 1000, 1400 
+    img.thumbnail((max_w, max_h), Image.Resampling.LANCZOS)
+    
+    # Centralização
+    img_pos = ((canvas_w - img.width) // 2, (canvas_h - img.height) // 2 - 50)
+    canvas.paste(img, img_pos)
+    
+    draw = ImageDraw.Draw(canvas)
+    
+    # Tentativa de carregar fonte do sistema para textos maiores
+    try:
+        font_mencao = ImageFont.truetype("arial.ttf", 65)
+        font_legenda = ImageFont.truetype("arial.ttf", 45)
+    except:
+        font_mencao = font_legenda = None
+
+    # Menção superior
+    draw.text((60, 120), f"@{TARGET_USER}", fill=(255, 255, 255), font=font_mencao)
+    
+    # Legenda com fundo preto
+    txt_fixo = f"Se liga nessa postagem da @{TARGET_USER}!"
+    txt_desc = f"{caption_text[:45]}..." if caption_text else ""
+    full_txt = f"{txt_fixo}\n{txt_desc}"
+    
+    rect_y = img_pos[1] + img.height + 40
+    draw.rectangle([40, rect_y, 1040, rect_y + 180], fill=(0, 0, 0))
+    draw.text((60, rect_y + 30), full_txt, fill=(255, 255, 255), font=font_legenda)
+    
+    path = os.path.join(EDIT_DIR, f"final_{post_id}.jpg")
+    canvas.save(path, quality=95)
+    return path
+
+def share_to_story(media_url, media_type, post_id, caption):
+    payload = {'media_type': 'STORIES', 'access_token': ACCESS_TOKEN}
+    
+    if media_type == 'VIDEO':
+        # PROTOCOLO VÍDEO: Postagem direta sem edição para garantir funcionamento
+        print(f"Postando vídeo {post_id} nativamente...")
+        payload['video_url'] = media_url
+        payload['caption'] = f'Confira esse vídeo na @{TARGET_USER} 🎵' # Menção via legenda API
+    else:
+        # PROTOCOLO IMAGEM: Edição completa com layout roxo
+        print(f"Processando imagem {post_id} com layout personalizado...")
+        local_path = prepare_custom_image(media_url, post_id, caption)
+        web_url = upload_to_web(local_path)
+        if not web_url: return False
+        payload['image_url'] = web_url
+
+    res = requests.post(f"https://graph.facebook.com/v18.0/{MY_INSTAGRAM_ID}/media", data=payload).json()
+    
+    if 'id' in res:
+        creation_id = res['id']
+        if media_type == 'VIDEO': 
+            time.sleep(20) # Vídeos exigem mais tempo de processamento na Meta
+        
+        p_res = requests.post(f"https://graph.facebook.com/v18.0/{MY_INSTAGRAM_ID}/media_publish", 
+                              data={'creation_id': creation_id, 'access_token': ACCESS_TOKEN}).json()
+        return 'id' in p_res
+    else:
+        print(f"Erro na criação do container: {res}")
+        return False
+
+def check_and_post():
+    print(f"[{datetime.now()}] Verificando @{TARGET_USER}...")
+    clean_old_media()
+    try:
+        with open(LOG_FILE, "r") as f: log = f.read().splitlines()
+    except: log = []
+    
+    url = f"https://graph.facebook.com/v18.0/{MY_INSTAGRAM_ID}"
+    fields = f"business_discovery.username({TARGET_USER}){{media{{id,media_url,media_type,caption,children{{media_url,media_type}}}}}}"
+    res = requests.get(url, params={'fields': fields, 'access_token': ACCESS_TOKEN}).json()
+    
+    posts = res.get('business_discovery', {}).get('media', {}).get('data', [])
+    
+    for p in posts:
+        if p['id'] not in log:
+            m_t, m_u = p['media_type'], p.get('media_url')
+            # Trata Carrossel pegando a primeira imagem e aplicando layout
+            if m_t == 'CAROUSEL_ALBUM':
+                m_u, m_t = p['children']['data'][0]['media_url'], p['children']['data'][0]['media_type']
+            
+            if share_to_story(m_u, m_t, p['id'], p.get('caption', '')):
+                with open(LOG_FILE, "a") as f: f.write(p['id'] + "\n")
+                print(f"✅ Post {p['id']} enviado com sucesso!")
+                return
+    print("📢 Sem posts novos para compartilhar.")
+
+if __name__ == "__main__":
+    check_and_post()
+    schedule.every().tuesday.at("19:00").do(check_and_post)
+    schedule.every().thursday.at("19:00").do(check_and_post)
+    while True:
+        schedule.run_pending()
+        time.sleep(60)
