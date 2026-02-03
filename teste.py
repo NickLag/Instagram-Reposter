@@ -1,9 +1,9 @@
 import requests
 
 # Preencha com seus dados
-APP_ID = '800832912417190'
-APP_SECRET = 'f77582f599a9b2da134861840d2a6bce'
-SHORT_TOKEN = 'EAALYWnFE4aYBQpMsety2oZCl2omkgGPg2UKuEqdK4fZCmWXDOVmD63j0voSAsk8ZC7aAbt9Awk4mzc5FXwtyh9ZA4V3Q2m82NUbZBFE7EpUwQNvc0wGvLS7V44EHcP3qQxZAUZBaMf6GZClmFsbZBokMrn1V7QttsZCClkAJrajrCp0ZAZChXaOjyjTB0DH0phQAOsfRWStIGGaO5hfmelmgOywWpbLLhWRyuHOvwkZCOukqid4ZB0l72LcmZAFBZBkCD69VtERXhJDGosZCJpWogsieCWIKLpar9'
+APP_ID = ''
+APP_SECRET = ''
+SHORT_TOKEN = ''
 
 def get_long_lived_token():
     url = "https://graph.facebook.com/v18.0/oauth/access_token"
