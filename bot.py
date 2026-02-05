@@ -34,7 +34,6 @@ def get_size_str(path):
     return f"[{size:.1f}mb]"
 
 def cut_video_30s(input_path, post_id):
-    """Corta o vídeo para 30s exatos com re-encoding para precisão"""
     output_path = os.path.join(MEDIA_DIR, f"cut_{post_id}.mp4")
     comando = [
         FFMPEG_EXE, '-y', '-i', input_path, 
@@ -47,14 +46,12 @@ def cut_video_30s(input_path, post_id):
     return output_path
 
 def extract_audio(input_path, post_id):
-    """Extrai o áudio para a pasta Audio"""
     audio_path = os.path.join(AUDIO_DIR, f"audio_{post_id}.mp3")
     comando = [FFMPEG_EXE, '-y', '-i', input_path, '-vn', '-acodec', 'libmp3lame', audio_path]
     subprocess.run(comando, check=True, capture_output=True)
     return audio_path
 
 def merge_audio_video(video_editado, audio_caminho, post_id):
-    """Une áudio e vídeo cravando a duração em 30s e corrigindo o FPS"""
     output_final = os.path.join(MEDIA_DIR, f"final_com_som_{post_id}.mp4")
     print(f" -> Combinando áudio com vídeo (Sincronia Forçada 30s)...")
     
