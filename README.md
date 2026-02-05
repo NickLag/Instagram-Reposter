@@ -53,5 +53,7 @@ Próximas atualizações:
 - Versão em inglês
 - Edição/alteração/remoção/adição de data e hora de postagem.
 
+(Nota: a imagem e o vídeo que são postados nos stories são editadas 100% por meio de código, não é possível compartilhar um post diretamente no story, então o arquivo é baixado e editado. Imagem: define altura e largura máxima, centraliza, cria um header e um footer brancos iguais com bordas externas arredondadas simulando o card do Instagra, é gerado texto para descrição, nome e conta com configurações de fonte, estilo, tamanho e coordenada, caso a imagem não seja 1:1, o fundo dela fica embaçado cobrindo o card, o fundo do story é a cor média da imagem sozinha. Vídeo: ele é encaixado no formato de story, se a proporção for diferente ele respeita altura e largura 1920x1080, é adicionado o @ da página no canto superior esquerdo como no Instagram, é gerado um texto de contagem regressiva oposto verticalmente ao @ da página, alinhado horizontalmente)
+
 Criado por: @tortoruuu
 Para uso de: @purplehaze_banda
