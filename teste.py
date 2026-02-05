@@ -18,10 +18,10 @@ def get_long_lived_token():
     data = response.json()
     
     if 'access_token' in data:
-        print("\n✅ Token de Longa Duração gerado com sucesso!")
+        print("\nToken de longa duração gerado com sucesso!")
         print(f"Novo Token: {data['access_token']}")
         print(f"Expira em: {data.get('expires_in', 'N/A')} segundos")
     else:
-        print("❌ Erro:", data)
+        print("Erro:", data)
 
 get_long_lived_token()
