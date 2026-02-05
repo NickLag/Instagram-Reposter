@@ -75,7 +75,7 @@ def merge_audio_video(video_editado, audio_caminho, post_id):
     except Exception as e:
         print(f" !! Erro Crítico na mesclagem: {e}")
         return video_editado
-
+    
 def clean_old_media():
     now = time.time()
     for folder in [MEDIA_DIR, AUDIO_DIR]:
@@ -171,7 +171,6 @@ def prepare_custom_image(media_url, post_id, caption_text):
 
     draw.rounded_rectangle([108, 571-108, 972, 571], radius=30,fill=(255, 255, 255))
     draw.rectangle([108, 621-108, 972, 571], fill=(255, 255, 255))
-
     draw.rounded_rectangle([108, 1349, 972, 1349+108], radius=30,fill=(255, 255, 255))
     draw.rectangle([108, 1349, 972, 1299+108], fill=(255, 255, 255))
 
@@ -317,15 +316,15 @@ def share_to_story(media_url, media_type, post_id, caption):
         
         print(" -> Aplicando corte de 30 segundos...")
         raw_30s = cut_video_30s(raw_full, post_id)
-        os.remove(raw_full) 
+        os.remove(raw_full)
         print(f" -> Vídeo cortado pronto {get_size_str(raw_30s)}")
 
         audio_path = extract_audio(raw_30s, post_id)
         processed_video = prepare_custom_video(raw_30s, post_id)
-        os.remove(raw_30s) 
+        os.remove(raw_30s)
         
         final_video = merge_audio_video(processed_video, audio_path, post_id)
-        os.remove(processed_video) 
+        os.remove(processed_video)
 
         print(f" -> Fazendo upload para o Catbox {get_size_str(final_video)}...")
         web_url = upload_video_to_web(final_video)
@@ -340,17 +339,13 @@ def share_to_story(media_url, media_type, post_id, caption):
         time.sleep(10)
 
         payload['video_url'] = web_url
-
     else:
         print(f"Processando imagem {post_id} com layout personalizado...")
         local_path = prepare_custom_image(media_url, post_id, caption)
-
         web_url = upload_to_web(local_path)
-
         if not web_url: 
             print(" -> Abortando postagem da imagem por falha no upload.")
             return False
-        
         payload['image_url'] = web_url
 
     print(f" -> Enviando comando de postagem para o Instagram...")
@@ -398,7 +393,7 @@ def check_and_post():
             m_t, m_u = p['media_type'], p.get('media_url')
             if m_t == 'CAROUSEL_ALBUM':
                 m_u, m_t = p['children']['data'][0]['media_url'], p['children']['data'][0]['media_type']
-
+            
             tentativas_max = 3
             for i in range(tentativas_max):
                 print(f" -> Tentativa {i+1}/{tentativas_max} para o post {p['id']}...")
@@ -406,7 +401,7 @@ def check_and_post():
                 if share_to_story(m_u, m_t, p['id'], p.get('caption', '')):
                     with open(LOG_FILE, "a") as f: f.write(p['id'] + "\n")
                     print(f" -> Post {p['id']} enviado com sucesso!")
-                    return 
+                    return
                 
                 if i < tentativas_max - 1:
                     print(f" !! Falha na tentativa {i+1}. Aguardando 5 minutos para tentar novamente...")
@@ -418,9 +413,18 @@ def check_and_post():
     print("Sem posts novos ou fila processada.")
 
 if __name__ == "__main__":
-    check_and_post()
-    schedule.every().tuesday.at("19:00").do(check_and_post)
-    schedule.every().thursday.at("19:00").do(check_and_post)
+    
+    print(f"[{datetime.now()}] Bot PurpleHaze iniciado com sucesso.")
+    print(f" -> Status: Em espera (Standby)...")
+    print(f" -> Próximas verificações agendadas: Terças e Quintas às 19:00")
+
+    schedule.every().tuesday.at("18:58").do(check_and_post)
+    schedule.every().thursday.at("18:58").do(check_and_post)
+
     while True:
         schedule.run_pending()
-        time.sleep(60)
+        if datetime.now().minute % 30 == 0 and datetime.now().second == 0:
+            print(f"[{datetime.now().strftime('%H:%M')}] Bot ativo e monitorando...")
+            time.sleep(1)
+            
+        time.sleep(1)
